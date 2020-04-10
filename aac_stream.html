@@ -1,0 +1,98 @@
+<html>
+<head>
+  <link type="text/css" href="tests.css" rel="stylesheet" />
+  <script type="text/javascript" src="./debugger.js"></script>
+  <!--<script type="text/javascript" src="Decoder.js"></script>
+  <script type="text/javascript" src="YUVCanvas.js"></script>
+  <script type="text/javascript" src="Player.js"></script>
+  
+  <script type="text/javascript" src="stream.js"></script>
+  
+  <script type="text/javascript" src="mp4.js"></script>-->
+  <script type="text/javascript">
+    var ac0, bInPlay; //AudioContext instance;
+
+    let files = [
+      './aac_stream_part0.m4a',
+      './aac_stream_part1.m4a',
+      './aac_stream_part2.m4a',
+      './aac_stream_part3.m4a',
+      './aac_stream_part4.m4a'
+    ];
+    let buffers = [];
+
+    function loadNextFile() {
+      if (files == null || files.length <= 0) {
+        window.debugger.log(`no more files found.`);
+        return;
+      }
+      let file = files.shift();
+      window.debugger.log(`start loading file: ${file}`);
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', file, true);
+      xhr.responseType = 'arraybuffer';
+      xhr.onload = function(e) {
+        var audioData = e.target.response;
+        window.debugger.log(`success loading ${file} array buffer size: ${audioData.byteLength}`);
+        ac0.decodeAudioData(audioData, function(buffer) {
+            window.debugger.log(`success loading ${file}`);
+            let bs = ac0.createBufferSource();
+            bs.buffer = buffer;
+            buffers.push(bs);
+            loadNextFile();
+            if (bInPlay == null) {
+              playNextBuffer();
+            }
+          },
+          function(e){
+            window.debugger.log("Error with decoding audio data" + e.err);
+          }
+          );//eof decodeAudioData;
+        }//eof onload;
+        xhr.send();
+      }
+      
+      function playNextBuffer() {
+        if (buffers == null || buffers.length <= 0) {
+          window.debugger.log(`no more buffers found. still loading?`);
+          return;
+        }
+        window.debugger.log(`play next buffer`);
+        let bs = buffers.shift();
+        bs.addEventListener("ended", playEndHandler);
+        bs.connect(ac0.destination);
+        bInPlay = bs;
+        bs.start(0);
+        //bs0.loop = true;
+        
+    }
+
+    function playEndHandler() {
+      window.debugger.log(`buffer play end`);
+      playNextBuffer();
+    }
+
+    function load() {
+      if (window.AudioContext != null) {
+        window.debugger.log("AudioContext avilable");
+        document.getElementById("start").addEventListener("click", (e) => {
+          startHandler();
+        });
+        window.debugger.log("click 'start' to allow audio and to start loading the audio files");
+      }
+    }
+
+    function startHandler() {
+      ac0 = new window.AudioContext();
+      loadNextFile();
+    }
+  </script>
+</head>
+<body onload="load()">
+
+<!-- <canvas id='canvas' width="640" height="100" style="background-color: #333333;"></canvas> -->
+<div style="font-size: 14px; line-height: 14px; font-family:Verdana, Geneva, Tahoma, sans-serif;">streamlike AudioContext buffer push from consecutively downloaded m4a (Lavc57.93.100 aac) files</div>
+<button type="button" id="start">start</button>
+<div></div>
+</body>
+</html>

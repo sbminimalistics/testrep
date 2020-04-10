@@ -1,0 +1,35 @@
+html, body {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    line-height: 0px;
+    overflow: hidden;
+}
+
+#video0{
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 100%;
+    height: 35%;
+    background-color: #000000;
+    z-index: 10;
+}
+
+#debug{
+    position: absolute;
+    left: 10%;
+    bottom: 0%;
+    width: 80%;
+    height: 60%;
+    max-height: 60%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 11;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 10px;
+    line-height: 10px;
+    color: #fff;
+    padding: 5px;
+    overflow: hidden auto;
+}
