@@ -38,6 +38,7 @@
             window.debugger.log(`success loading ${file}`);
             let bs = ac0.createBufferSource();
             bs.buffer = buffer;
+            bs.connect(ac0.destination);
             buffers.push(bs);
             loadNextFile();
             if (bInPlay == null) {
@@ -55,14 +56,14 @@
       function playNextBuffer() {
         if (buffers == null || buffers.length <= 0) {
           window.debugger.log(`no more buffers found. still loading?`);
+          bInPlay = null;
           return;
         }
         window.debugger.log(`play next buffer`);
         let bs = buffers.shift();
-        bs.addEventListener("ended", playEndHandler);
-        bs.connect(ac0.destination);
         bInPlay = bs;
-        bs.start(0);
+        bInPlay.addEventListener("ended", playEndHandler);
+        bInPlay.start(0);
         //bs0.loop = true;
         
     }
