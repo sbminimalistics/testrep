@@ -1,6 +1,7 @@
 <html>
 <head>
   <link type="text/css" href="tests.css" rel="stylesheet" />
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/howler@2.1.3/dist/howler.js"></script>
   <script type="text/javascript" src="./debugger.js"></script>
   <!--<script type="text/javascript" src="Decoder.js"></script>
   <script type="text/javascript" src="YUVCanvas.js"></script>
@@ -10,16 +11,17 @@
   
   <script type="text/javascript" src="mp4.js"></script>-->
   <script type="text/javascript">
-    var ac0, bInPlay; //AudioContext instance;
+    var useHowl = false;
+    var ac0, soundInPlay; //AudioContext instance;
 
-    let files = [
+    var files = [
       './aac_stream_part0.m4a',
       './aac_stream_part1.m4a',
       './aac_stream_part2.m4a',
       './aac_stream_part3.m4a',
       './aac_stream_part4.m4a'
     ];
-    let buffers = [];
+    var buffers = [];
 
     function loadNextFile() {
       if (files == null || files.length <= 0) {
@@ -28,44 +30,63 @@
       }
       let file = files.shift();
       window.debugger.log(`start loading file: ${file}`);
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', file, true);
-      xhr.responseType = 'arraybuffer';
-      xhr.onload = function(e) {
-        var audioData = e.target.response;
-        window.debugger.log(`success loading ${file} array buffer size: ${audioData.byteLength}`);
-        ac0.decodeAudioData(audioData, function(buffer) {
-            window.debugger.log(`success loading ${file}`);
-            let bs = ac0.createBufferSource();
-            bs.buffer = buffer;
-            bs.connect(ac0.destination);
-            buffers.push(bs);
-            loadNextFile();
-            if (bInPlay == null) {
-              playNextBuffer();
-            }
-          },
-          function(e){
-            window.debugger.log("Error with decoding audio data" + e.err);
+
+      if (useHowl == true) {
+        var sound = new Howl({
+          src: [file]
+        });
+        sound.once('load', function(){
+          window.debugger.log(`success loading ${file} using Howler`);
+          buffers.push(sound);
+          loadNextFile();
+          if (soundInPlay == null) {
+            playNextBuffer();
           }
+        });
+      } else {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', file, true);
+        xhr.responseType = 'arraybuffer';
+        xhr.onload = function(e) {
+          var audioData = e.target.response;
+          window.debugger.log(`success loading ${file} array buffer size: ${audioData.byteLength}`);
+          ac0.decodeAudioData(audioData, function(buffer) {
+              window.debugger.log(`success loading ${file}`);
+              let bs = ac0.createBufferSource();
+              bs.buffer = buffer;
+              bs.connect(ac0.destination);
+              buffers.push(bs);
+              loadNextFile();
+              if (soundInPlay == null) {
+                playNextBuffer();
+              }
+            },
+            function(e){
+              window.debugger.log("Error with decoding audio data" + e.err);
+            }
           );//eof decodeAudioData;
         }//eof onload;
         xhr.send();
       }
-      
-      function playNextBuffer() {
-        if (buffers == null || buffers.length <= 0) {
-          window.debugger.log(`no more buffers found. still loading?`);
-          bInPlay = null;
-          return;
-        }
-        window.debugger.log(`play next buffer`);
-        let bs = buffers.shift();
-        bInPlay = bs;
-        bInPlay.addEventListener("ended", playEndHandler);
-        bInPlay.start(0);
-        //bs0.loop = true;
-        
+    }
+    
+    function playNextBuffer() {
+      if (buffers == null || buffers.length <= 0) {
+        window.debugger.log(`no more buffers found. still loading?`);
+        soundInPlay = null;
+        return;
+      }
+      window.debugger.log(`play next buffer`);
+      let bs = buffers.shift();
+      soundInPlay = bs;
+      if (useHowl == true) {
+        soundInPlay.on("end", playEndHandler);
+        soundInPlay.play();
+      } else {
+        soundInPlay.addEventListener("ended", playEndHandler);
+        soundInPlay.start(0);
+      }
+      //bs0.loop = true;
     }
 
     function playEndHandler() {
@@ -80,10 +101,13 @@
           startHandler();
         });
         window.debugger.log("click 'start' to allow audio and to start loading the audio files");
+      } else {
+        window.debugger.log("AudioContext NOT avilable.");
       }
     }
-
+    
     function startHandler() {
+      useHowl = document.getElementById("usehowler").checked;
       ac0 = new window.AudioContext();
       loadNextFile();
     }
@@ -92,8 +116,11 @@
 <body onload="load()">
 
 <!-- <canvas id='canvas' width="640" height="100" style="background-color: #333333;"></canvas> -->
-<div style="font-size: 14px; line-height: 14px; font-family:Verdana, Geneva, Tahoma, sans-serif;">streamlike AudioContext buffer push from consecutively downloaded m4a (Lavc57.93.100 aac) files</div>
-<button type="button" id="start">start</button>
+<div id="header">
+<h4 style="line-height: 0px;">streamlike AudioContext buffer push from consecutively downloaded m4a (Lavc57.93.100 aac) files</h4>
+<input type="checkbox" id="usehowler"><label for="usehowler">use Howler instead of pure AudioContext</label><br>
+<button id="start">start</button>
+</div>
 <div></div>
 </body>
 </html>
