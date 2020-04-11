@@ -72,7 +72,7 @@
     
     function playNextBuffer() {
       if (buffers == null || buffers.length <= 0) {
-        window.debugger.log(`no more buffers found. still loading?`);
+        window.debugger.log(`no more buffer found. still loading?`);
         soundInPlay = null;
         return;
       }
@@ -97,18 +97,23 @@
     function load() {
       if (window.AudioContext != null) {
         window.debugger.log("AudioContext avilable");
-        document.getElementById("start").addEventListener("click", (e) => {
-          startHandler();
-        });
-        window.debugger.log("click 'start' to allow audio and to start loading the audio files");
       } else {
-        window.debugger.log("AudioContext NOT avilable.");
+        window.debugger.log("AudioContext NOT avilable. Howler automatically on");
+        useHowl = document.getElementById("usehowler").checked = true;
+        useHowl = document.getElementById("usehowler").disabled = true;
       }
+      document.getElementById("start").addEventListener("click", (e) => {
+        startHandler();
+      });
+      window.debugger.log("click 'start' to allow audio and to start loading the audio files");
     }
     
     function startHandler() {
       useHowl = document.getElementById("usehowler").checked;
-      ac0 = new window.AudioContext();
+      window.debugger.log(`Howler on: ${useHowl}`);
+      if (!useHowl) {
+        ac0 = new window.AudioContext();
+      }
       loadNextFile();
     }
   </script>
@@ -117,7 +122,7 @@
 
 <!-- <canvas id='canvas' width="640" height="100" style="background-color: #333333;"></canvas> -->
 <div id="header">
-<h4 style="line-height: 0px;">streamlike AudioContext buffer push from consecutively downloaded m4a (Lavc57.93.100 aac) files</h4>
+<h4>streamlike AudioContext buffer push from consecutively downloaded m4a (Lavc57.93.100 aac) files</h4>
 <input type="checkbox" id="usehowler"><label for="usehowler">use Howler instead of pure AudioContext</label><br>
 <button id="start">start</button>
 </div>
